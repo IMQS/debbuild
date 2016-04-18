@@ -1,0 +1,22 @@
+{
+    "group": "imqs",
+    "name": "siteview",
+    "version": "1.0.0",
+    "author": "Leon Leibbrandt",
+    "description": "Implementation of imqs-siteview",
+    "repository":"git@github.com:IMQS/siteview.git",
+    "package":"github.com/IMQS/imqs-siteview",
+    "binary":"imqs-siteview",
+	"workdir":"/home/leon/Projects/sv/",
+	"control":{
+		"package": "imqs-siteview",
+		"version": "0.0.1",
+		"section": "science",
+		"priority": "optional",
+		"architecture": "amd64",
+		"depends": "libc6",
+		"maintainer": "IMQS <imqs@imqs.co.za>",
+		"description": "Application to generate 3D view of state of site.",
+		"longdescription":"This script provides a service running on port 4300 that generates a png image of the 3D view of the state of a site."
+	}
+}
