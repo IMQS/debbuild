@@ -8,23 +8,27 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"text/template"
+	"time"
 )
 
 type DebBuild struct {
-	Group       string                        `json:"group"`
-	Name        string                        `json:"name"`
-	Version     string                        `json:"version"`
-	Author      string                        `json:"author"`
-	Description string                        `json:"description"`
-	Repository  string                        `json:"repository"`
-	Package     string                        `json:"package"` // the package name for the go build command
-	Binary      string                        `json:"binary"`  // the name of the application
-	WorkDir     string                        `json:"workdir"`
-	Control     *Control                      `json:"control"`
-	RepoDir     string                        `json:"-"`
-	DebDir      string                        `json:"-"`
-	Templates   map[string]*template.Template `json:"-"`
+	Group        string                        `json:"group"`
+	Name         string                        `json:"name"`
+	Version      string                        `json:"version"`
+	Author       string                        `json:"author"`
+	Description  string                        `json:"description"`
+	Repository   string                        `json:"repository"`
+	Package      string                        `json:"package"`      // the package name for the go build command
+	Binary       string                        `json:"binary"`       // the name of the application
+	Distribution string                        `json:"distribution"` //required for debian package
+	WorkDir      string                        `json:"workdir"`
+	Control      *Control                      `json:"control"`
+	RepoDir      string                        `json:"-"`
+	DebDir       string                        `json:"-"`
+	Templates    map[string]*template.Template `json:"-"`
+	ChangeLog    []string                      `json:"-"`
 }
 
 func NewDebBuild(filename string) (*DebBuild, error) {
@@ -47,11 +51,39 @@ func NewDebBuild(filename string) (*DebBuild, error) {
 			return nil, err
 		}
 	}
-
+	d.ChangeLog = append(d.ChangeLog, fmt.Sprintf("%s (%s)", d.Binary, d.Version), "")
 	return d, nil
 }
 
-func (d *DebBuild) CloneOrPull() error {
+func (d *DebBuild) Build() error {
+
+	// first clean deb tree
+	// err := d.runCmd("rm", []string{"-rf", path.Join(d.DebDir, "*")})
+	// if err != nil {
+	//	return err
+	// }
+
+	err := d.cloneOrPull()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done Git")
+
+	err = d.compile()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done compile")
+
+	err = d.populate()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done Populate")
+	return nil
+}
+
+func (d *DebBuild) cloneOrPull() error {
 	if _, err := os.Stat(d.RepoDir); os.IsNotExist(err) {
 		// Repo does not exist
 		err := d.runCmd("git", []string{"clone", d.Repository, d.RepoDir})
@@ -75,11 +107,22 @@ func (d *DebBuild) CloneOrPull() error {
 		return err
 	}
 
+	out, err := exec.Command("git", "log", "--pretty=format:%s", "--reverse").Output()
+	if err != nil {
+		return err
+	}
+	logentries := strings.Split(string(out), "\n")
+	for _, entry := range logentries {
+		d.ChangeLog = append(d.ChangeLog, fmt.Sprintf("  * %s", entry))
+	}
+	d.ChangeLog = append(d.ChangeLog, "")
+	d.ChangeLog = append(d.ChangeLog, fmt.Sprintf(" -- IMQS <imqs@imqs.co.za>  %s", time.Now().Format(time.RFC1123Z)))
+
 	os.Chdir(d.WorkDir)
 	return nil
 }
 
-func (d *DebBuild) Compile() error {
+func (d *DebBuild) compile() error {
 	os.Chdir(d.RepoDir)
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -100,7 +143,7 @@ func (d *DebBuild) Compile() error {
 	return nil
 }
 
-func (d *DebBuild) Populate() error {
+func (d *DebBuild) populate() error {
 	os.Chdir(d.DebDir)
 
 	err := d.systemd()
@@ -118,6 +161,7 @@ func (d *DebBuild) Populate() error {
 		return err
 	}
 
+	os.Chdir(d.WorkDir)
 	return nil
 }
 
@@ -146,6 +190,42 @@ func (d *DebBuild) doc() error {
 	if err != nil {
 		return err
 	}
+
+	/*
+		    delPath := path.Join("usr/share/doc/", d.Binary)
+			os.Chdir(delPath)
+			p, e := os.Getwd()
+			if e != nil {
+				return e
+			}
+			fmt.Printf("Currently in %s\n", p)
+			out, err := exec.Command("rm", "-f", "*").Output()
+			if err != nil {
+				fmt.Println(out)
+				return err
+			}
+			os.Chdir(d.DebDir)
+	*/
+	changelog := path.Join(d.DebDir, "usr/share/doc/", d.Binary, "changelog")
+	err = ioutil.WriteFile(changelog, []byte(strings.Join(d.ChangeLog, "\n")), 0644)
+	if err != nil {
+		return err
+	}
+
+	err = d.runCmd("cp", []string{changelog, changelog + ".Debian"})
+	if err != nil {
+		return err
+	}
+
+	err = d.runCmd("gzip", []string{"--best", "-f", changelog})
+	if err != nil {
+		return err
+	}
+	err = d.runCmd("gzip", []string{"--best", "-f", changelog + ".Debian"})
+	if err != nil {
+		return err
+	}
+
 	err = d.runCmd("mkdir", []string{"-p", "usr/share/man/man1"})
 	if err != nil {
 		return err

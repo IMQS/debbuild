@@ -32,31 +32,29 @@ func (c *Control) Bytes() []byte {
 		result = append(result, fmt.Sprintf("%s: %s", name, r.Field(i).Interface()))
 	}
 
-	remain := func(str string, index int) int {
-		if len(str) < index {
-			return len(str) - 1
+	remain := func(str string) int {
+		length := len(str)
+		if length < linelen {
+			return length
 		}
-		return index
+		return linelen
 	}
-
-	length := len(c.LongDescription)
 	start := 0
-	stop := start + remain(c.LongDescription, linelen)
-	for stop < length {
-		stop = stop + strings.Index(c.LongDescription[stop:], " ")
-		result = append(result, fmt.Sprintf(" %s", c.LongDescription[start:stop]))
-		start = stop
-		stop := start + remain(c.LongDescription[start:], linelen)
-
-	}
-
-	for i := 0; i < length; i += linelen {
-		stop := i + strings.Index(c.LongDescription[i:], " ")
-		if stop > 59 {
-			stop = 59
+	stop := start + remain(c.LongDescription)
+	for {
+		spaceindex := strings.Index(c.LongDescription[stop:], " ")
+		if spaceindex > 0 {
+			stop = stop + spaceindex
+		} else {
+			stop = len(c.LongDescription)
 		}
-		line := fmt.Sprintf(" %s", c.LongDescription[i:i+stop])
-		result = append(result, line)
+		line := strings.TrimSpace(c.LongDescription[start:stop])
+		result = append(result, fmt.Sprintf(" %s", line))
+		start = stop + 1
+		if start >= len(c.LongDescription) {
+			break
+		}
+		stop = start + remain(c.LongDescription[start:])
 	}
 
 	return []byte(strings.Join(result, "\n"))

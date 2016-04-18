@@ -17,20 +17,7 @@ func main() {
 		os.Exit(-1)
 	}
 
-	err = deb.CloneOrPull()
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(-1)
-	}
-
-	err = deb.Compile()
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(-1)
-
-	}
-
-	err = deb.Populate()
+	err = deb.Build()
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		os.Exit(-1)
