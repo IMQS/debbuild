@@ -1,0 +1,27 @@
+{
+    "group": "imqs",
+    "name": "distributer",
+    "version": "1.0.0",
+    "author": "Leon Leibbrandt",
+    "description": "Implementation of imqs-distributer",
+    "repository":"git@github.com:IMQS/distributer.git",
+    "package":"github.com/IMQS/distributer",
+    "binary":"imqs-distributer",
+	"distribution":"unstable",
+	"workdir":"/home/leon/Projects/debian/distributer/",
+	"control":{
+		"package": "imqs-distributer",
+		"priority": "optional",
+		"architecture": "amd64",
+		"depends": "libc6",
+		"maintainer": "IMQS <imqs@imqs.co.za>",
+		"description": "Application to generate 3D view of state of site.",
+		"longdescription":[
+			" This script provides a service running on port 4300 that generates",
+			" a png image of the 3D view of the state of a site. It also has a",
+			" test page on url http://localhost:4300/test/.",
+			" .",
+			" This is just a further line in the description"
+		]
+	}
+}

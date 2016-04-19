@@ -52,16 +52,14 @@ func NewDebBuild(filename string) (*DebBuild, error) {
 		}
 	}
 	d.ChangeLog = append(d.ChangeLog, fmt.Sprintf("%s (%s)", d.Binary, d.Version), "")
+	err = d.runCmd("mkdir", []string{"-p", d.WorkDir})
+	if err != nil {
+		return nil, err
+	}
 	return d, nil
 }
 
 func (d *DebBuild) Build() error {
-
-	// first clean deb tree
-	// err := d.runCmd("rm", []string{"-rf", path.Join(d.DebDir, "*")})
-	// if err != nil {
-	//	return err
-	// }
 
 	err := d.cloneOrPull()
 	if err != nil {
@@ -75,12 +73,36 @@ func (d *DebBuild) Build() error {
 	}
 	fmt.Println("Done compile")
 
-	err = d.populate()
+	os.Chdir(d.DebDir)
+
+	err = d.systemd()
 	if err != nil {
 		return err
 	}
-	fmt.Println("Done Populate")
+	fmt.Println("Done systemd")
+
+	err = d.doc()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done doc")
+
+	err = d.debian()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done debian")
+
+	os.Chdir(d.WorkDir)
+
+	err = d.dpkg()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Done dpkg")
+
 	return nil
+
 }
 
 func (d *DebBuild) cloneOrPull() error {
@@ -133,34 +155,15 @@ func (d *DebBuild) compile() error {
 		return err
 	}
 
+	// Here we just ignore errors, they will be caught on compile
+	d.runCmd("go", []string{"get", "./..."})
+	
 	binFile := path.Join(d.DebDir, "/usr/local/bin/", d.Binary)
 
 	err = d.runCmd("go", []string{"build", "-o", binFile, d.Package})
 	if err != nil {
 		return err
 	}
-	os.Chdir(d.WorkDir)
-	return nil
-}
-
-func (d *DebBuild) populate() error {
-	os.Chdir(d.DebDir)
-
-	err := d.systemd()
-	if err != nil {
-		return err
-	}
-
-	err = d.doc()
-	if err != nil {
-		return err
-	}
-
-	err = d.debian()
-	if err != nil {
-		return err
-	}
-
 	os.Chdir(d.WorkDir)
 	return nil
 }
@@ -191,21 +194,6 @@ func (d *DebBuild) doc() error {
 		return err
 	}
 
-	/*
-		    delPath := path.Join("usr/share/doc/", d.Binary)
-			os.Chdir(delPath)
-			p, e := os.Getwd()
-			if e != nil {
-				return e
-			}
-			fmt.Printf("Currently in %s\n", p)
-			out, err := exec.Command("rm", "-f", "*").Output()
-			if err != nil {
-				fmt.Println(out)
-				return err
-			}
-			os.Chdir(d.DebDir)
-	*/
 	changelog := path.Join(d.DebDir, "usr/share/doc/", d.Binary, "changelog")
 	err = ioutil.WriteFile(changelog, []byte(strings.Join(d.ChangeLog, "\n")), 0644)
 	if err != nil {
@@ -238,7 +226,7 @@ func (d *DebBuild) debian() error {
 	if err != nil {
 		return err
 	}
-	for _, name := range []string{"postinst", "prerm"} {
+	for _, name := range []string{"postinst", "prerm", "control"} {
 		buffer := bytes.NewBufferString("")
 		err = d.Templates[name].Execute(buffer, d)
 		if err != nil {
@@ -252,12 +240,15 @@ func (d *DebBuild) debian() error {
 			return err
 		}
 	}
-	controlFile := path.Join(d.DebDir, "DEBIAN", "control")
-	err = ioutil.WriteFile(controlFile, d.Control.Bytes(), 0755)
+	return nil
+}
+
+func (d *DebBuild) dpkg() error {
+	filename := fmt.Sprintf("%s-%s.deb", d.Binary, d.Version)
+	err := d.runCmd("fakeroot", []string{"dpkg-deb", "--build", "DEBBASE", filename})
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

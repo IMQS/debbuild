@@ -1,0 +1,27 @@
+{
+    "group": "imqs",
+    "name": "insite",
+    "version": "1.0.0",
+    "author": "Leon Leibbrandt",
+    "description": "Implementation of imqs-insite",
+    "repository":"git@github.com:IMQS/insite.git",
+    "package":"github.com/IMQS/imqs-insite",
+    "binary":"imqs-insite",
+	"distribution":"unstable",
+	"workdir":"/home/leon/Projects/debian/insite/",
+	"control":{
+		"package": "imqs-insite",
+		"priority": "optional",
+		"architecture": "amd64",
+		"depends": "libc6",
+		"maintainer": "IMQS <imqs@imqs.co.za>",
+		"description": "Application to generate 3D view of state of site.",
+		"longdescription":[
+			" This script provides a service running on port 4300 that generates",
+			" a png image of the 3D view of the state of a site. It also has a",
+			" test page on url http://localhost:4300/test/.",
+			" .",
+			" This is just a further line in the description"
+		]
+	}
+}
