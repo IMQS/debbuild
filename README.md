@@ -7,6 +7,9 @@ The standard GOPATH setting and go install command are used to create the execut
 Copy this executable to some directory that is available in the PATH.
 
 # Using
+
+Requires dpkg-deb, git and fakeroot to be installed.
+
 There are some samples in the example directory. The only thing that needs to change is the local directories.
 Run the command debbuild --config=[somefile.json].
 
