@@ -8,7 +8,7 @@ Copy this executable to some directory that is available in the PATH.
 
 # Using
 
-Requires dpkg-deb, git and fakeroot to be installed.
+Requires dpkg-dev, git and fakeroot to be installed.
 
 There are some samples in the example directory. The only thing that needs to change is the local directories.
 Run the command debbuild --config=[somefile.json].
