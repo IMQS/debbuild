@@ -11,7 +11,7 @@ Copy this executable to some directory that is available in the PATH.
 Requires dpkg-dev, git and fakeroot to be installed.
 
 There are some samples in the example directory. The only thing that needs to change is the local directories.
-Run the command debbuild --config=[somefile.json].
+Run the command debbuild [somefile.json].
 
 This will build a standard .deb package that can be used to install the application on a debian based system. All the required
 elements are included in the deb archive including a changelog that is build automatically from the git logs, as well as the start
