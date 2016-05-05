@@ -179,7 +179,7 @@ func (d *DebBuild) systemd() error {
 		return err
 	}
 
-	sysdFile := path.Join(d.DebDir, "/lib/systemd/system", d.Binary+".system")
+	sysdFile := path.Join(d.DebDir, "/lib/systemd/system", d.Binary+".service")
 	err = ioutil.WriteFile(sysdFile, buffer.Bytes(), 0644)
 	if err != nil {
 		return err

@@ -12,12 +12,13 @@ ExecStart=/usr/local/bin/{{ .Binary }}
 WantedBy=multi-user.target
 `,
 	"postinst": `#!/bin/sh -e
-systemctl enable {{ .Binary }}.service
-systemctl start {{ .Binary }}.service
+systemctl enable {{ .Binary }}
+systemctl start {{ .Binary }}
 `,
 	"prerm": `#!/bin/sh -e
-systemctl stop {{ .Binary }}.service
-systemctl disable {{ .Binary }}.service`,
+systemctl stop {{ .Binary }}
+systemctl disable {{ .Binary }}
+`,
 	"control": `Package: {{ .Binary }}
 Version: {{ .Version }}
 Section: {{ .Control.Section }}
